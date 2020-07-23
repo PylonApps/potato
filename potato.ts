@@ -102,17 +102,15 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
     { name: 'inspect', description: 'potato count' },
     (args) => ({ who: args.user() }),
     async (message, { who }) => {
-      const target = who;
-
-      const currentCount = (await potatoKV.get<number>(target.id)) || 0;
+      const currentCount = (await potatoKV.get<number>(who.id)) || 0;
       await message.reply(
         new discord.Embed({
           title: `${discord.decor.Emojis.POTATO} potato count ${discord.decor.Emojis.POTATO}`,
-          description: `${message.author.getTag()} has ${currentCount} potato${
+          description: `${who.getTag()} has ${currentCount} potato${
             currentCount === 1 ? '' : 's'
           }. ${discord.decor.Emojis.POTATO.repeat(currentCount)}`,
           color: 0x11111c,
-          thumbnail: { url: message.author.getAvatarUrl() }
+          thumbnail: { url: who.getAvatarUrl() }
         })
       );
     }
