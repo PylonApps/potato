@@ -142,9 +142,9 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
           title: `${discord.decor.Emojis.GAME_DIE} ${discord.decor.Emojis.POTATO} ${discord.decor.Emojis.GAME_DIE}`,
           description: `Your gambling ${won ? 'paid off' : 'sucked'}, you ${
             won ? 'gained' : 'lost'
-          } ${count} potato${
-            count === 1 ? '' : 's'
-          }, giving you a total of ${newCount} potato${
+          } ${count} potato${count === 1 ? '' : 's'}, ${
+            won ? 'giving you' : 'leaving you with'
+          } a total of ${newCount} potato${
             newCount === 1 ? '' : 's'
           }. ${discord.decor.Emojis.POTATO.repeat(newCount)} ${
             won
