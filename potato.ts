@@ -188,6 +188,9 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
       if (count > targetPotatos)
         return await message.reply('That user doesnt have that many potatos!');
 
+      if (count < 1)
+        return await message.reply('You need to steal at least one potato.');
+
       if (count > 5)
         return await message.reply(
           'Your small hands can only carry 5 potatos!'
