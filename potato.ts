@@ -139,7 +139,7 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
         );
 
       await potatoKV.put(`gamble-${message.author?.id}`, true, {
-        ttl: randomTimeBetween(10 * 60 * 1000, 20 * 60 * 1000)
+        ttl: randomTimeBetween(2 * 60 * 1000, 5 * 60 * 1000)
       });
 
       const won = Math.random() > 0.5;
@@ -194,7 +194,7 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
         );
 
       await potatoKV.put(`steal-${message.author?.id}`, true, {
-        ttl: randomTimeBetween(10 * 60 * 1000, 20 * 60 * 1000)
+        ttl: randomTimeBetween(3 * 60 * 1000, 10 * 60 * 1000)
       });
 
       const newUserPotatos = userPotatos + count * (success ? 1 : -1);
