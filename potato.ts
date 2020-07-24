@@ -6,7 +6,7 @@ const randomTimeBetween = (min: number, max: number) =>
   Math.round(Math.random() * (max - min) + min);
 
 discord.on(discord.Event.MESSAGE_CREATE, async (message: discord.Message) => {
-  if (!message.author) return;
+  if (!message.author || message.author.bot) return;
 
   if (await potatoKV.get<boolean>('cooldown')) {
     if (message.content === discord.decor.Emojis.POTATO) {
@@ -120,6 +120,11 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
     { name: 'gamble', description: 'gamble potatos' },
     (args) => ({ count: args.integer() }),
     async (message, { count }) => {
+      if (await potatoKV.get<boolean>(`gamble-${message.author?.id}`))
+        return await message.reply(
+          `${discord.decor.Emojis.NO_ENTRY_SIGN} ${discord.decor.Emojis.POTATO} gambling addiction is a serious problem. Regulations require a wait.`
+        );
+
       const currentCount =
         (await potatoKV.get<number>(message.author?.id)) || 0;
 
@@ -132,6 +137,10 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
         return await message.reply(
           'You can only gamble between 1 and 10 potatos.'
         );
+
+      await potatoKV.put(`gamble-${message.author?.id}`, true, {
+        ttl: randomTimeBetween(10 * 60 * 1000, 20 * 60 * 1000)
+      });
 
       const won = Math.random() > 0.5;
       const newCount = currentCount + count * (won ? 1 : -1);
@@ -163,6 +172,10 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
     async (message, { who, count }) => {
       if (message.author?.id === who.id)
         return await message.reply("You can't steal from yourself!");
+      if (await potatoKV.get<boolean>(`steal-${message.author?.id}`))
+        return await message.reply(
+          `${discord.decor.Emojis.POLICE_OFFICER} Your potato thief actions are being currently scrutinized. Lay low for a while.`
+        );
       const success = Math.random() < 0.25;
       const userPotatos = (await potatoKV.get<number>(message.author?.id)) || 0;
       const targetPotatos = (await potatoKV.get<number>(who.id)) || 0;
@@ -179,6 +192,10 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
         return await message.reply(
           'Your small hands can only carry 5 potatos!'
         );
+
+      await potatoKV.put(`steal-${message.author?.id}`, true, {
+        ttl: randomTimeBetween(10 * 60 * 1000, 20 * 60 * 1000)
+      });
 
       const newUserPotatos = userPotatos + count * (success ? 1 : -1);
       const newTargetPotatos = targetPotatos + count * (success ? -1 : 1);
