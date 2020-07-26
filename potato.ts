@@ -29,7 +29,7 @@ discord.on(discord.Event.MESSAGE_CREATE, async (message: discord.Message) => {
       await message.reply(
         new discord.Embed({
           title: `${discord.decor.Emojis.POTATO} potato claimed ${discord.decor.Emojis.POTATO}`,
-          description: `${message.author.getTag()} has claimed a potato, and now holds onto ${currentCount} potato${
+          description: `${message.author.getTag()} has claimed a potato, and now holds onto ${currentCount} potatoes${
             currentCount === 1 ? '' : 's'
           }.`,
           color: 0x11111c,
@@ -69,9 +69,9 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
             '- `!potato help` - shows this help message',
             '- `!potato` - show off your potato balance',
             '- `!potato inspect [user]` - inspect another [user]s potato balance',
-            '- `!potato gamble <count>` - gamble <count> potatos',
-            '- `!potato steal <who> <count>` - steal potatos from other people',
-            "- `!potato give <who> <count>` - give your potatos to other people - if you're feeling kind."
+            '- `!potato gamble <count>` - gamble <count> potatoes',
+            '- `!potato steal <who> <count>` - steal potatoes from other people',
+            "- `!potato give <who> <count>` - give your potatoes to other people - if you're feeling kind."
           ].join('\n')
         })
       );
@@ -130,12 +130,12 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
 
       if (count > currentCount)
         return await message.reply(
-          'You can only gamble as many potatos as you have!'
+          'You can only gamble as many potatoes as you have!'
         );
 
       if (count > 10 || count < 1)
         return await message.reply(
-          'You can only gamble between 1 and 10 potatos.'
+          'You can only gamble between 1 and 10 potatoes.'
         );
 
       await potatoKV.put(`gamble-${message.author?.id}`, true, {
@@ -182,18 +182,18 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
 
       if (count > userPotatos)
         return await message.reply(
-          'You can only steal as many potatos as you have!'
+          'You can only steal as many potatoes as you have!'
         );
 
       if (count > targetPotatos)
-        return await message.reply('That user doesnt have that many potatos!');
+        return await message.reply('That user doesnt have that many potatoes!');
 
       if (count < 1)
         return await message.reply('You need to steal at least one potato.');
 
       if (count > 5)
         return await message.reply(
-          'Your small hands can only carry 5 potatos!'
+          'Your small hands can only carry 5 potatoes!'
         );
 
       await potatoKV.put(`steal-${message.author?.id}`, true, {
@@ -229,17 +229,17 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
   );
 
   subCommandGroup.on(
-    { name: 'give', description: 'give potatos to other people' },
+    { name: 'give', description: 'give potatoes to other people' },
     (args) => ({ who: args.user(), count: args.integer() }),
     async (message, { who, count }) => {
       if (message.author?.id === who.id)
-        return await message.reply("You can't give potatos to yourself!");
+        return await message.reply("You can't give potatoes to yourself!");
       const userPotatos = (await potatoKV.get<number>(message.author?.id)) || 0;
       const targetPotatos = (await potatoKV.get<number>(who.id)) || 0;
 
       if (count > userPotatos)
         return await message.reply(
-          'You can only give as many potatos as you have!'
+          'You can only give as many potatoes as you have!'
         );
 
       if (count < 1)
