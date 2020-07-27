@@ -69,6 +69,7 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
             '- `!potato help` - shows this help message',
             '- `!potato` - show off your potato balance',
             '- `!potato inspect [user]` - inspect another [user]s potato balance',
+            '- `!potato top` - top 10 potato collectors',
             '- `!potato gamble <count>` - gamble <count> potatos',
             '- `!potato steal <who> <count>` - steal potatos from other people',
             "- `!potato give <who> <count>` - give your potatos to other people - if you're feeling kind."
@@ -255,6 +256,36 @@ potatoCommands.subcommand('potato', (subCommandGroup) => {
         `you gave ${count} potato${
           count === 1 ? '' : 's'
         } to ${who.getTag()}, how nice of you.`
+      );
+    }
+  );
+
+  subCommandGroup.on(
+    { name: 'top', description: 'top potatos' },
+    () => ({}),
+    async (message) => {
+      const items = await potatoKV.items();
+      const sorted = items
+        .filter((entry) => !isNaN((entry.key as unknown) as number))
+        .sort((a, b) => (b.value as number) - (a.value as number));
+      const top = sorted.slice(0, 10);
+      const userMap = await Promise.all(
+        top.map((entry) =>
+          discord
+            .getUser(entry.key)
+            .then((user) => ({ user, potatos: entry.value }))
+        )
+      );
+
+      await message.reply(
+        new discord.Embed({
+          title: `Top ${userMap.length} ${discord.decor.Emojis.POTATO} collectors`,
+          description: userMap
+            .map(
+              (entry) => `\`${entry.user?.getTag()}\`: ${entry.potatos} potatos`
+            )
+            .join('\n')
+        })
       );
     }
   );
