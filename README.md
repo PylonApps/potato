@@ -3,3 +3,8 @@ To use this module in [Pylon](https://pylon.bot/), go to the editor, create a ne
 ```ts
 import './potato';
 ```
+
+If you intend to use the potato lottery system. you also have to define a lottery channel (by its channel ID) in your `main.ts`:
+```ts
+global.POTATO_LOTTERY_CHANNEL = '693621234365366302';
+```
