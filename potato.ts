@@ -368,7 +368,7 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
       let newCount = oldCount;
       if (count.startsWith('+')) newCount += parseInt(count.replace('+', ''));
       else if (count.startsWith('-'))
-        newCount += parseInt(count.replace('-', ''));
+        newCount -= parseInt(count.replace('-', ''));
       else newCount = parseInt(count);
 
       if (isNaN(newCount as number))
