@@ -1,4 +1,5 @@
 const POTATO_LOTTERY_TIME_MINUTES = 5;
+const ALLOW_DAILY = true;
 const potatoCommands = new discord.command.CommandGroup({
   defaultPrefix: '!'
 });
@@ -72,6 +73,21 @@ discord.on(discord.Event.MESSAGE_CREATE, async (message: discord.Message) => {
     }
 
     return;
+  } else {
+    const [lastChannel, potatoId] =
+      (await potatoKV.get<string>('lastPotato'))?.split('-') || [];
+
+    await discord
+      .getGuild()
+      .then(
+        (g) =>
+          g.getChannel(lastChannel) as Promise<
+            discord.GuildTextChannel | undefined
+          >
+      )
+      .then((c) => c?.getMessage(potatoId))
+      .then((m) => m?.delete())
+      .catch(() => {});
   }
 
   if (Math.random() > 0.3) return;
@@ -81,9 +97,7 @@ discord.on(discord.Event.MESSAGE_CREATE, async (message: discord.Message) => {
   const cooldown = randomTimeBetween(3 * 60 * 1000, 20 * 60 * 1000);
 
   await potatoKV.put('cooldown', true, { ttl: cooldown });
-  await potatoKV.put('lastPotato', `${message.channelId}-${reply.id}`, {
-    ttl: cooldown
-  });
+  await potatoKV.put('lastPotato', `${message.channelId}-${reply.id}`);
 });
 
 potatoCommands.subcommand('potato', (potatoSubcommands) => {
@@ -106,6 +120,7 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
             '- `!potato steal <who> <count>` - steal potatos from other people',
             "- `!potato give <who> <count>` - give your potatos to other people - if you're feeling kind.",
             '- `!potato drop` - drop one of your potatos. the fastest to pick it up gets it',
+            '- `!potato daily` - claim your daily potato',
             '',
             '- `!potato lottery` - info about the current lottery pool',
             '- `!potato lottery deposit <count>` - deposit <count> potatos into the lottery pool'
@@ -368,7 +383,7 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
       let newCount = oldCount;
       if (count.startsWith('+')) newCount += parseInt(count.replace('+', ''));
       else if (count.startsWith('-'))
-        newCount += parseInt(count.replace('-', ''));
+        newCount -= parseInt(count.replace('-', ''));
       else newCount = parseInt(count);
 
       if (isNaN(newCount as number))
@@ -380,6 +395,29 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
       );
     }
   );
+
+  if (ALLOW_DAILY)
+    potatoSubcommands.on(
+      { name: 'daily', description: 'daily potato' },
+      () => ({}),
+      async (message) => {
+        if (await potatoKV.get<boolean>(`daily-${message.author.id}`))
+          return await message.reply('you already claimed your daily potato!');
+
+        await potatoKV.put(`daily-${message.author.id}`, true, {
+          ttl:
+            Math.ceil(Date.now() / 1000 / 60 / 60 / 24) * 24 * 60 * 60 * 1000 -
+            Date.now()
+        });
+        const newCount = await potatoKV.transact(
+          message.author.id,
+          (prev: number | undefined) => (prev || 0) + 1
+        );
+        await message.reply(
+          `you claimed your daily potato, and now hold onto ${newCount} potatos.`
+        );
+      }
+    );
 
   const lottery = potatoSubcommands.subcommandGroup({
     name: 'lottery',
