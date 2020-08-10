@@ -22,6 +22,15 @@ const nextDrawText = () => {
     minutes === 1 ? 'minute' : 'minutes'
   } and ${seconds} ${seconds === 1 ? 'second' : 'seconds'}`;
 };
+const setDefaultReply = (commandGroup: discord.command.CommandGroup) => {
+  commandGroup.default(
+    () => ({}),
+    async (message) =>
+      await message.reply(
+        `${discord.decor.Emojis.NO_ENTRY} unknown potato command, try \`${potatoCommands.commandPrefixes[0]}potato help\``
+      )
+  );
+};
 
 discord.on(discord.Event.MESSAGE_CREATE, async (message: discord.Message) => {
   if (!message.author || message.author.bot) return;
@@ -101,6 +110,8 @@ discord.on(discord.Event.MESSAGE_CREATE, async (message: discord.Message) => {
 });
 
 potatoCommands.subcommand('potato', (potatoSubcommands) => {
+  setDefaultReply(potatoSubcommands);
+
   potatoSubcommands.on(
     { name: 'help', description: 'potato help' },
     () => ({}),
@@ -423,6 +434,8 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
     name: 'lottery',
     description: 'potato lottery commands'
   });
+
+  setDefaultReply(lottery);
 
   lottery.on(
     { name: '', description: 'pool info' },
