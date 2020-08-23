@@ -1,5 +1,42 @@
 const POTATO_LOTTERY_TIME_MINUTES = 5;
 const ALLOW_DAILY = true;
+const SHOP_ITEMS = {
+  'potato farmer': {
+    price: 1,
+    description: 'gives you the potato farmer role for 24h',
+    async onPurchase(user: discord.User) {
+      const guild = await discord.getGuild();
+      const member = await guild.getMember(user.id);
+      const role = await guild
+        .getRoles()
+        .then((roles) => roles.find((role) => role.name === 'potato farmer'));
+      if (!member || !role) throw new Error('invalid role or member');
+      await member.addRole(role.id);
+    },
+    async onExpire(user: discord.User) {
+      const guild = await discord.getGuild();
+      const member = await guild.getMember(user.id);
+      const role = await guild
+        .getRoles()
+        .then((roles) => roles.find((role) => role.name === 'potato farmer'));
+      if (!member || !role || !member.roles.includes(role.id)) return;
+
+      await member.removeRole(role.id);
+    },
+    enabled: true,
+    duration: 24 * 60 * 60 * 1000 // 24 hours, checked in 5 minute intervals
+  }
+} as {
+  [key: string]: {
+    price: number;
+    duration: number | undefined;
+    description: string;
+    enabled: boolean;
+    onPurchase: Function;
+    onExpire: Function;
+  };
+};
+
 const potatoCommands = new discord.command.CommandGroup({
   defaultPrefix: '!'
 });
@@ -51,24 +88,32 @@ discord.on(discord.Event.MESSAGE_CREATE, async (message: discord.Message) => {
 
       const poisonous = Math.random() < 0.01;
 
-      const currentCount = Math.max(
+      const oldCount = (await potatoKV.get<number>(message.author.id)) || 0;
+      const newCount = Math.max(
         0,
-        ((await potatoKV.get<number>(message.author.id)) || 0) +
-          (poisonous ? -1 : 1)
+        oldCount +
+          (poisonous
+            ? -Math.max(
+                1,
+                Math.min(10, Math.floor((Math.random() * oldCount) / 4))
+              )
+            : 1)
       );
-      await potatoKV.put(message.author.id, currentCount);
+
+      await potatoKV.put(message.author.id, newCount);
       await potatoKV.delete('lastPotato');
       await message.reply(
         new discord.Embed({
-          title: poisonous
-            ? 'poisonous potato'
-            : `${discord.decor.Emojis.POTATO} potato claimed ${discord.decor.Emojis.POTATO}`,
+          title: `${
+            poisonous ? discord.decor.Emojis.SKULL : discord.decor.Emojis.POTATO
+          } potato claimed ${discord.decor.Emojis.POTATO}`,
           description: `${message.author.getTag()} ${
             poisonous
-              ? 'tried to pick up a poisonous potato'
+              ? `tried to pick up a poisonous potato, poisoning ${oldCount -
+                  newCount} potatos in the process`
               : 'has claimed a potato'
-          }, and now holds onto ${currentCount} potato${
-            currentCount === 1 ? '' : 's'
+          }, and now holds onto ${newCount} potato${
+            newCount === 1 ? '' : 's'
           }.`,
           color: 0x11111c,
           thumbnail: { url: message.author.getAvatarUrl() },
@@ -134,7 +179,10 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
             '- `!potato daily` - claim your daily potato',
             '',
             '- `!potato lottery` - info about the current lottery pool',
-            '- `!potato lottery deposit <count>` - deposit <count> potatos into the lottery pool'
+            '- `!potato lottery deposit <count>` - deposit <count> potatos into the lottery pool',
+            '',
+            '- `!potato shop list` - list all available shop items',
+            '- `!potato shop buy <item>` - buy <item> from the shop'
           ].join('\n')
         })
       );
@@ -301,6 +349,8 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
     async (message, { who, count }) => {
       if (message.author?.id === who.id)
         return await message.reply("You can't give potatos to yourself!");
+      if (who.bot)
+        return await message.reply("You can't give potatos to bots!");
       const userPotatos = (await potatoKV.get<number>(message.author?.id)) || 0;
       const targetPotatos = (await potatoKV.get<number>(who.id)) || 0;
 
@@ -367,6 +417,14 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
       if (!userPotatos)
         return await message.reply("you don't have any potatos!");
 
+      const lastPotato = await potatoKV.get<string>('lastPotato');
+      if (lastPotato)
+        return await message.reply(
+          `there is already an active potato waiting to be picked up in <#${
+            lastPotato.split('-')[0]
+          }>!`
+        );
+
       await potatoKV.put(message.author?.id, userPotatos - 1);
 
       const reply = await message.reply(discord.decor.Emojis.POTATO);
@@ -389,6 +447,10 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
     async (message, { who, count }) => {
       if (!(await discord.command.filters.isAdministrator().filter(message)))
         return await message.reply('missing permissions');
+      if (who.bot)
+        return await message.reply(
+          'thats a.. bot. you wanna modify a bots potatos??'
+        );
       const oldCount = (await potatoKV.get<number>(who.id)) || 0;
 
       let newCount = oldCount;
@@ -402,7 +464,7 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
 
       await potatoKV.put(who.id, newCount as number);
       await message.reply(
-        `ok, updated ${who.getTag()}'s potatos to ${newCount}`
+        `Ok, updated ${who.getTag()}'s potatos to ${newCount}`
       );
     }
   );
@@ -452,14 +514,6 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
       const lotteryData = ((await potatoKV.get('lottery')) || {}) as {
         [key: string]: number;
       };
-      const nextDraw =
-        (Math.ceil(Date.now() / 1000 / 60 / POTATO_LOTTERY_TIME_MINUTES) *
-          1000 *
-          60 *
-          POTATO_LOTTERY_TIME_MINUTES -
-          Date.now()) /
-        1000 /
-        60;
       await message.reply(
         `${
           Object.keys(lotteryData).length
@@ -537,6 +591,109 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
       );
     }
   );
+
+  const shop = potatoSubcommands.subcommandGroup({
+    name: 'shop',
+    description: 'potato shop commands'
+  });
+
+  setDefaultReply(shop);
+
+  shop.on(
+    { name: 'list', aliases: [''], description: 'list all potato shop items' },
+    () => ({}),
+    async (message) => {
+      if (!Object.keys(SHOP_ITEMS).length)
+        return await message.reply('no items currently available, sorry!');
+
+      const fields = await Promise.all(
+        Object.entries(SHOP_ITEMS)
+          .filter(([, item]) => item.enabled)
+          .map(async ([name, item]) => ({
+            name: `${name} - ${item.price} ${discord.decor.Emojis.POTATO}`,
+            value: item.description,
+            inline: true
+          }))
+      );
+
+      await message.reply(
+        new discord.Embed({
+          title: 'Potato Shop',
+          description: `**Available Items**\nuse \`${potatoCommands.commandPrefixes[0]}potato shop buy <item>\` to purchase an item listed here`,
+          fields
+        })
+      );
+    }
+  );
+
+  shop.on(
+    {
+      name: 'buy',
+      aliases: ['purchase'],
+      description: 'purchase a potato shop item'
+    },
+    (args) => ({ item: args.text() }),
+    async (message, { item }) => {
+      const itemObj = SHOP_ITEMS[item];
+      if (!itemObj || !itemObj.enabled)
+        return await message.reply(
+          `invalid potato item. use \`${potatoCommands.commandPrefixes[0]}potato shop list\` to get a list of all available items`
+        );
+
+      const purchases = ((await potatoKV.get<pylon.JsonArray>('shop')) ||
+        []) as { user: string; item: string; expiresAt: number | undefined }[];
+      const purchase = purchases.find(
+        (purchase) =>
+          purchase.user === message.author.id && purchase.item === item
+      );
+      if (purchase)
+        return message.reply(
+          `You already bought this item!${
+            purchase.expiresAt
+              ? ` You can buy it again on ${new Date(
+                  purchase.expiresAt
+                ).toUTCString()}`
+              : ''
+          }`
+        );
+
+      const userPotatos = (await potatoKV.get<number>(message.author.id)) || 0;
+      if (userPotatos < itemObj.price)
+        return await message.reply(
+          "you don't have enough potatos for that item!"
+        );
+
+      try {
+        await itemObj.onPurchase(message.author);
+      } catch (err) {
+        return await message.reply(
+          `There was an error processing your order: ${err.message}`
+        );
+      }
+
+      await potatoKV.transact(
+        message.author.id,
+        (prev: number | undefined) => (prev || 0) - itemObj.price
+      );
+
+      await potatoKV.transact(
+        'shop',
+        (prev: pylon.JsonArray | undefined) =>
+          [
+            ...(prev || []),
+            {
+              user: message.author.id,
+              item,
+              expiresAt: itemObj.duration
+                ? Date.now() + itemObj.duration
+                : undefined
+            }
+          ] as pylon.JsonArray
+      );
+
+      await message.reply(`You successfully bought \`${item}\`!`);
+    }
+  );
 });
 
 pylon.tasks.cron(
@@ -583,3 +740,27 @@ pylon.tasks.cron(
     );
   }
 );
+
+pylon.tasks.cron('shop', '0 0/5 * * * * *', async () => {
+  const purchases = ((await potatoKV.get<pylon.JsonArray>('shop')) || []) as {
+    user: string;
+    item: string;
+    expiresAt: number | undefined;
+  }[];
+
+  const newPurchases = [];
+
+  for (const purchase of purchases) {
+    if (purchase.expiresAt && purchase.expiresAt <= Date.now()) {
+      const item = SHOP_ITEMS[purchase.item];
+      if (!item) continue;
+
+      discord
+        .getUser(purchase.user)
+        .then((user) => item.onExpire(user))
+        .catch((err) => console.error(err));
+    } else newPurchases.push(purchase);
+  }
+
+  await potatoKV.put('shop', newPurchases as pylon.JsonArray);
+});
