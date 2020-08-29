@@ -36,6 +36,11 @@ const SHOP_ITEMS = {
     onExpire: Function;
   };
 };
+const MEDALS = [
+  discord.decor.Emojis.FIRST_PLACE_MEDAL,
+  discord.decor.Emojis.SECOND_PLACE_MEDAL,
+  discord.decor.Emojis.THIRD_PLACE_MEDAL
+];
 
 const potatoCommands = new discord.command.CommandGroup({
   defaultPrefix: '!'
@@ -383,26 +388,50 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
     () => ({}),
     async (message) => {
       const items = await potatoKV.items();
-      const sorted = items
-        .filter((entry) => !isNaN((entry.key as unknown) as number))
-        .sort((a, b) => (b.value as number) - (a.value as number));
-      const top = sorted.slice(0, 10);
+      const filtered = items.filter(
+        (entry) =>
+          !isNaN((entry.key as unknown) as number) &&
+          ((entry.value as unknown) as number) > 0
+      );
+      const sorted = filtered.sort(
+        (a, b) => (b.value as number) - (a.value as number)
+      );
+      const top = sorted.slice(0, 9);
       const userMap = await Promise.all(
         top.map((entry) =>
           discord
             .getUser(entry.key)
-            .then((user) => ({ user, potatos: entry.value }))
+            .then((user) => ({ user, potatos: entry.value as number }))
         )
       );
 
+      let description = `${discord.decor.Emojis.POTATO} **${filtered
+        .reduce((a, b) => a + (b.value as number), 0)
+        .toLocaleString()}**\n`;
+      description += `${discord.decor.Emojis.MAN_FARMER} **${filtered.length}**\n\n`;
+      description += `${discord.decor.Emojis.CHART_WITH_UPWARDS_TREND} **Ranks** ${discord.decor.Emojis.MUSCLE}\n`;
+
+      for (const entry of userMap) {
+        const { user, potatos } = entry;
+        const place = userMap.indexOf(entry);
+        description += `\` ${MEDALS[place] || ` ${place + 1} `} \` **${
+          user?.username
+        }**#${user?.discriminator} - ${potatos.toLocaleString()} potatos\n`;
+      }
+
+      description += `\` ... \` *${sorted.length - 10}* other farmers\n`;
+
+      const lastUser = await discord.getUser(sorted[sorted.length - 1].key);
+      description += `\` ${sorted.length.toString().padEnd(3, ' ')} \` **${
+        lastUser?.username
+      }**#${lastUser?.discriminator} - ${
+        sorted[sorted.length - 1].value
+      } potato${sorted[sorted.length - 1].value === 1 ? '' : 's'}`;
+
       await message.reply(
         new discord.Embed({
-          title: `Top ${userMap.length} ${discord.decor.Emojis.POTATO} collectors`,
-          description: userMap
-            .map(
-              (entry) => `\`${entry.user?.getTag()}\`: ${entry.potatos} potatos`
-            )
-            .join('\n')
+          title: `${discord.decor.Emojis.TROPHY} Leaderboard​ ${discord.decor.Emojis.CROWN}`,
+          description
         })
       );
     }
