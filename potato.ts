@@ -419,14 +419,18 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
         }**#${user?.discriminator} - ${potatos.toLocaleString()} potatos\n`;
       }
 
-      description += `\` ... \` *${sorted.length - 10}* other farmers\n`;
+      const ownIndex = sorted.findIndex(
+        (item) => item.key === message.author.id
+      );
 
-      const lastUser = await discord.getUser(sorted[sorted.length - 1].key);
-      description += `\` ${sorted.length.toString().padEnd(3, ' ')} \` **${
-        lastUser?.username
-      }**#${lastUser?.discriminator} - ${
-        sorted[sorted.length - 1].value
-      } potato${sorted[sorted.length - 1].value === 1 ? '' : 's'}`;
+      if (ownIndex > 9) {
+        description += `\` ... \` *${ownIndex - 9}* other farmers\n`;
+        description += `\` ${(ownIndex + 1).toString().padEnd(3, ' ')} \` **${
+          message.author.username
+        }**#${message.author.discriminator} - ${sorted[ownIndex].value} potato${
+          sorted[ownIndex].value === 1 ? '' : 's'
+        }`;
+      }
 
       await message.reply(
         new discord.Embed({
