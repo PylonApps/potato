@@ -176,7 +176,7 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
             '- `!potato help` - shows this help message',
             '- `!potato` - show off your potato balance',
             '- `!potato inspect [user]` - inspect another [user]s potato balance',
-            '- `!potato top` - top 10 potato collectors',
+            '- `!potato top [count]` - top n potato collectors',
             '- `!potato gamble <count>` - gamble <count> potatos',
             '- `!potato steal <who> <count>` - steal potatos from other people',
             "- `!potato give <who> <count>` - give your potatos to other people - if you're feeling kind.",
@@ -385,8 +385,9 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
 
   potatoSubcommands.on(
     { name: 'top', description: 'top potatos' },
-    () => ({}),
-    async (message) => {
+    (args) => ({ count: args.integerOptional() }),
+    async (message, { count }) => {
+      count = Math.min(Math.max(3, count || 10), 20);
       const items = await potatoKV.items();
       const filtered = items.filter(
         (entry) =>
@@ -396,7 +397,7 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
       const sorted = filtered.sort(
         (a, b) => (b.value as number) - (a.value as number)
       );
-      const top = sorted.slice(0, 9);
+      const top = sorted.slice(0, count);
       const userMap = await Promise.all(
         top.map((entry) =>
           discord
@@ -411,10 +412,11 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
       description += `${discord.decor.Emojis.MAN_FARMER} **${filtered.length}**\n\n`;
       description += `${discord.decor.Emojis.CHART_WITH_UPWARDS_TREND} **Ranks** ${discord.decor.Emojis.MUSCLE}\n`;
 
-      for (const entry of userMap) {
+      for (const entry of userMap.slice(0, Math.max(3, count - 1))) {
         const { user, potatos } = entry;
         const place = userMap.indexOf(entry);
-        description += `\` ${MEDALS[place] || ` ${place + 1} `} \` **${
+        description += `\` ${MEDALS[place] ||
+          `${(place + 1).toString().padStart(2, ' ')} `} \` **${
           user?.username
         }**#${user?.discriminator} - ${potatos.toLocaleString()} potatos\n`;
       }
@@ -423,13 +425,18 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
         (item) => item.key === message.author.id
       );
 
-      if (ownIndex > 9) {
-        description += `\` ... \` *${ownIndex - 9}* other farmers\n`;
-        description += `\` ${(ownIndex + 1).toString().padEnd(3, ' ')} \` **${
+      if (ownIndex >= count) {
+        description += `\` ... \` *${ownIndex - count + 1}* other farmers\n`;
+        description += `\` ${(ownIndex + 1).toString().padStart(2, ' ')} \` **${
           message.author.username
         }**#${message.author.discriminator} - ${sorted[ownIndex].value} potato${
           sorted[ownIndex].value === 1 ? '' : 's'
         }`;
+      } else if (count > 3) {
+        const { user, potatos } = userMap[count - 1];
+        description += `\` ${count.toString().padStart(2, ' ')}  \` **${
+          user?.username
+        }**#${user?.discriminator} - ${potatos.toLocaleString()} potatos\n`;
       }
 
       await message.reply(
