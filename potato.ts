@@ -398,6 +398,7 @@ potatoCommands.subcommand('potato', (potatoSubcommands) => {
         (a, b) => (b.value as number) - (a.value as number)
       );
       const top = sorted.slice(0, count);
+      count = top.length;
       const userMap = await Promise.all(
         top.map((entry) =>
           discord
