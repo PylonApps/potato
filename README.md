@@ -9,7 +9,7 @@ If you intend to use the potato lottery system. you also have to define a lotter
 global.POTATO_LOTTERY_CHANNEL = '693621234365366302';
 ```
 
-# Port to slash command
+# Port to slash commands
 The potato economy has also been ported to slash commands, a new discord feature. If you'd rather use this version do what you would do with `potato.ts` but with `potato:slash.ts` 
 
 **Changes**
