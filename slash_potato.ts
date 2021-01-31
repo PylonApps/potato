@@ -47,6 +47,8 @@ const MEDALS = [
 ];
 
 const potatoKV = new pylon.KVNamespace('potato');
+const randomTimeBetween = (min: number, max: number) =>
+  Math.round(Math.random() * (max - min) + min);
 
 discord.on(discord.Event.MESSAGE_CREATE, async (message: discord.Message) => {
   if (!message.author || message.author.bot) return;
