@@ -47,34 +47,6 @@ const MEDALS = [
 ];
 
 const potatoKV = new pylon.KVNamespace('potato');
-const randomTimeBetween = (min: number, max: number) =>
-  Math.round(Math.random() * (max - min) + min);
-const nextDrawText = () => {
-  const nextDraw =
-    (Math.ceil(Date.now() / 1000 / 60 / POTATO_LOTTERY_TIME_MINUTES) *
-      1000 *
-      60 *
-      POTATO_LOTTERY_TIME_MINUTES -
-      Date.now()) /
-    1000 /
-    60;
-
-  const minutes = Math.floor(nextDraw);
-  const seconds = Math.floor((nextDraw % 1) * 60);
-  return `next draw is in ${minutes} ${
-    minutes === 1 ? 'minute' : 'minutes'
-  } and ${seconds} ${seconds === 1 ? 'second' : 'seconds'}`;
-};
-
-const setDefaultReply = (commandGroup: discord.command.CommandGroup) => {
-  commandGroup.default(
-    () => ({}),
-    async (message) =>
-      await message.reply(
-        `${discord.decor.Emojis.NO_ENTRY} unknown potato command, try \`/potato help\``
-      )
-  );
-};
 
 discord.on(discord.Event.MESSAGE_CREATE, async (message: discord.Message) => {
   if (!message.author || message.author.bot) return;
