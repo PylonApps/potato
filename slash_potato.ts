@@ -568,10 +568,14 @@ shop.register(
         }))
     );
 
-    await message.respond(`Potato Shop
-**Available Items**\nuse \`/potato shop buy <item>\` to purchase an item listed here
+    let embed = new discord.Embed({
+      title: 'Potato Shop',
+      description:
+        '**Available Items**\nuse `/potato shop buy <item>` to purchase an item listed here',
+      fields: fields
+    });
 
-${fields}`);
+    await message.respond({ embeds: [embed] });
   }
 );
 
