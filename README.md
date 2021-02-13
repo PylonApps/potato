@@ -16,7 +16,7 @@ The potato economy has also been ported to slash commands, a new discord feature
 
 Besides all commands being slash commands there are a few differences 
 
-1) Potato lottery has been disabled as it was just causing trouble and Pylon cvan only have up to 10 slash commands so it had to go
+1) Potato lottery has been disabled as it was just causing trouble and Pylon can only have up to 10 slash commands so it had to go
 2) `/potato drop` now doesn't delete the potato as Pylon can't delete a slash command response
 3) `/potato` doesnt exist, to see your own potatoes uses `/potato inspect` withput providing a user
 
