@@ -11,9 +11,6 @@ global.POTATO_LOTTERY_CHANNEL = '693621234365366302';
 
 # Addons
 
-If you use the code in `disboard.ts`, users will get a specified amount of potatoes for bumping your server with the popular bot disboard.
-Simple specify how many they should get, put the code in a seperate file and import it
-
 If you use the code in `autodelete.ts` Pylon will autodelete potatoes of a user when they leave your server to save the limited amount of kv keys (256). Again put this in a seperate file and import it if you want to use. It also has the option to log when someone leaves, to remove that feature remove the lines that have been marked as "Only necessary if you want to send a message when a user leaves"
 
 # Port to slash commands
