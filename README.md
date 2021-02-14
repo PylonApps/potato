@@ -24,4 +24,4 @@ Besides all commands being slash commands there are a few differences
 2) `/potato drop` now doesn't delete the potato as Pylon can't delete a slash command response
 3) `/potato` doesnt exist, to see your own potatoes uses `/potato inspect` withput providing a user
 
-## DO NOT USE BOTH CODES!!!
+## DO NOT BOTH THE SLASH AND NORMAL POTATO CODE IN ONE GUILD!!!
