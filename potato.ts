@@ -2,7 +2,7 @@ const potatoCommands = new discord.command.CommandGroup({
   defaultPrefix: '!'
 });
 
-const slash_commands: boolean = true; //Define here to either use slash commands (use true) or normal commands (use false)
+const SLASH_COMMANDS: boolean = true; //Define here to either use slash commands (use true) or normal commands (use false)
 const POTATO_LOTTERY_TIME_MINUTES = 5; //Define here how long potato lottery should take
 const ALLOW_DAILY = true; //Define here if people should be able to claim daily potatoes or not
 const SHOP_ITEMS = {
