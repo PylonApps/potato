@@ -13,7 +13,9 @@ You can also choose to use the slash command version by setting
 ```ts
 const SLASH_COMMANDS = true
 ```
-Changes if you set it to true:
+Slash commands are a discord feature which will make it easier for users to use the commands as they will get the commands displayed by just typing /potato
+
+Other changes if you set it to true:
 1) Potato lottery has been disabled as it was just causing trouble and Pylon can only have up to 10 slash commands so it had to go
 2) `/potato drop` now doesn't delete the potato as Pylon can't delete a slash command response
 3) `/potato` doesnt exist, to see your own potatoes uses `/potato inspect` withput providing a user
