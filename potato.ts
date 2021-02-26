@@ -52,8 +52,8 @@ const randomTimeBetween = (min: number, max: number) =>
   Math.round(Math.random() * (max - min) + min);
 
 discord.on(discord.Event.MESSAGE_CREATE, async (message: discord.Message) => {
-  if (!['710873588646936576', '739525325267927082'].includes(message.channelId))
-    return;
+  //if (!['channel_id_1', 'channel_id_2'].includes(message.channelId)) <- to have potatoe spawn in only specific channels, uncomment this and input the channel ids
+    //return;
   if (!message.author || message.author.bot) return;
 
   if (await potatoKV.get<boolean>('cooldown')) {
